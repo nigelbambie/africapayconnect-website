@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AfricaPayConnect — Pan-African Payments</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #F5A623;
+    --deep-green: #0D2B1E;
+    --mid-green: #1A4D30;
+    --light-green: #2E8B57;
+    --accent: #FF6B35;
+    --cream: #FDF6E3;
+    --text: #E8F5E9;
+    --muted: rgba(232,245,233,0.55);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--deep-green);
+    color: var(--text);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed; top: 0; left: 0; z-index: 9999;
+    width: 12px; height: 12px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease, width 0.3s ease, height 0.3s ease, background 0.3s ease;
+    mix-blend-mode: screen;
+  }
+  .cursor-ring {
+    position: fixed; top: 0; left: 0; z-index: 9998;
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform 0.18s ease, width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+    opacity: 0.5;
+  }
+
+  /* Canvas */
+  #bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 4rem;
+    background: linear-gradient(to bottom, rgba(13,43,30,0.95) 0%, transparent 100%);
+    backdrop-filter: blur(4px);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.35rem;
+    letter-spacing: -0.02em;
+    color: var(--cream);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .logo-dot { width: 10px; height: 10px; background: var(--gold); border-radius: 50%; }
+  nav ul { display: flex; gap: 2.5rem; list-style: none; }
+  nav a {
+    color: var(--muted); font-size: 0.9rem; text-decoration: none;
+    letter-spacing: 0.03em; font-weight: 500;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--gold); }
+  .nav-cta {
+    background: var(--gold); color: var(--deep-green) !important;
+    padding: 0.55rem 1.4rem; border-radius: 50px;
+    font-weight: 700 !important; font-size: 0.85rem !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(245,166,35,0.35) !important; }
+
+  /* HERO */
+  .hero {
+    position: relative; z-index: 10;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 0 2rem;
+    overflow: hidden;
+  }
+  .hero-tag {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.18em;
+    color: var(--gold); text-transform: uppercase;
+    background: rgba(245,166,35,0.12);
+    padding: 0.4rem 1.2rem; border-radius: 50px;
+    border: 1px solid rgba(245,166,35,0.25);
+    margin-bottom: 2rem;
+    animation: fadeUp 0.8s ease both;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3rem, 8vw, 7.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--cream);
+    animation: fadeUp 0.9s 0.1s ease both;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero-sub {
+    margin-top: 1.8rem;
+    max-width: 520px;
+    font-size: 1.05rem; font-weight: 300;
+    color: var(--muted); line-height: 1.7;
+    animation: fadeUp 1s 0.2s ease both;
+  }
+  .hero-actions {
+    margin-top: 2.8rem;
+    display: flex; gap: 1rem;
+    animation: fadeUp 1s 0.35s ease both;
+  }
+  .btn-primary {
+    background: var(--gold); color: var(--deep-green);
+    padding: 0.85rem 2.2rem; border-radius: 50px;
+    font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; border: none;
+    transition: transform 0.25s, box-shadow 0.25s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(245,166,35,0.4); }
+  .btn-ghost {
+    background: transparent; color: var(--cream);
+    padding: 0.85rem 2.2rem; border-radius: 50px;
+    font-weight: 500; font-size: 0.95rem;
+    cursor: pointer;
+    border: 1px solid rgba(232,245,233,0.25);
+    transition: border-color 0.25s, background 0.25s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-ghost:hover { border-color: var(--gold); background: rgba(245,166,35,0.08); }
+
+  .hero-stats {
+    margin-top: 5rem;
+    display: flex; gap: 3rem;
+    animation: fadeUp 1s 0.5s ease both;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem; font-weight: 800; color: var(--cream);
+  }
+  .stat-num span { color: var(--gold); }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; letter-spacing: 0.05em; }
+
+  .scroll-hint {
+    position: absolute; bottom: 2.5rem;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    color: var(--muted); font-size: 0.75rem; letter-spacing: 0.1em;
+    animation: fadeUp 1s 0.8s ease both;
+  }
+  .scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 2s infinite;
+  }
+
+  /* FLOATING CARDS */
+  .float-cards {
+    position: absolute; width: 100%; height: 100%;
+    top: 0; left: 0; pointer-events: none; overflow: hidden;
+  }
+  .fcard {
+    position: absolute;
+    background: rgba(26,77,48,0.65);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 16px;
+    padding: 1.2rem 1.6rem;
+    font-size: 0.82rem;
+    color: var(--cream);
+    animation: floatCard linear infinite;
+    white-space: nowrap;
+  }
+  .fcard-inner { display: flex; align-items: center; gap: 0.6rem; }
+  .fcard-icon { font-size: 1.2rem; }
+  .fcard-label { font-weight: 600; }
+  .fcard-val { color: var(--gold); font-weight: 700; margin-top: 0.1rem; font-size: 0.95rem; }
+
+  /* SECTIONS */
+  section {
+    position: relative; z-index: 10;
+    padding: 7rem 4rem;
+  }
+
+  /* FEATURES */
+  .features { background: rgba(13,43,30,0.6); }
+  .section-tag {
+    font-size: 0.73rem; font-weight: 600; letter-spacing: 0.18em;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.02em; color: var(--cream);
+    max-width: 680px;
+  }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 4rem;
+  }
+  .feat-card {
+    background: rgba(26,77,48,0.4);
+    border: 1px solid rgba(232,245,233,0.08);
+    border-radius: 20px;
+    padding: 2.2rem;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .feat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(to right, var(--gold), var(--accent));
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feat-card:hover { transform: translateY(-6px); border-color: rgba(245,166,35,0.25); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .feat-card:hover::before { opacity: 1; }
+  .feat-icon {
+    width: 52px; height: 52px;
+    background: rgba(245,166,35,0.12);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: 1.4rem;
+    border: 1px solid rgba(245,166,35,0.2);
+  }
+  .feat-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; color: var(--cream);
+  }
+  .feat-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.65; }
+
+  /* HOW IT WORKS */
+  .hiw { display: flex; gap: 5rem; align-items: center; }
+  .hiw-left { flex: 1; }
+  .hiw-right { flex: 1; }
+  .steps { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex; gap: 1.4rem; padding: 1.6rem 0;
+    border-bottom: 1px solid rgba(232,245,233,0.08);
+    transition: background 0.2s;
+    cursor: default;
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem; font-weight: 800;
+    color: rgba(245,166,35,0.2);
+    min-width: 2.5rem; line-height: 1;
+    transition: color 0.3s;
+  }
+  .step:hover .step-num { color: var(--gold); }
+  .step-content h4 {
+    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--cream); margin-bottom: 0.3rem;
+  }
+  .step-content p { font-size: 0.87rem; color: var(--muted); line-height: 1.6; }
+
+  /* 3D PHONE MOCK */
+  .phone-container {
+    width: 100%; display: flex; justify-content: center; align-items: center;
+    perspective: 1000px;
+  }
+  .phone-3d {
+    width: 240px; height: 480px;
+    background: linear-gradient(145deg, #1e5c3a, #0f3322);
+    border-radius: 40px;
+    border: 2px solid rgba(245,166,35,0.3);
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6), inset 0 0 60px rgba(245,166,35,0.05);
+    transform: rotateY(-18deg) rotateX(4deg);
+    animation: phoneTilt 6s ease-in-out infinite alternate;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    padding: 1.5rem 1rem;
+  }
+  .phone-screen-top {
+    width: 100%; background: rgba(245,166,35,0.1); border-radius: 20px; padding: 1rem;
+    margin-bottom: 0.8rem;
+  }
+  .phone-bal-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.05em; }
+  .phone-bal {
+    font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--gold); margin-top: 0.2rem;
+  }
+  .phone-txns { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
+  .txn {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.04); border-radius: 10px;
+    padding: 0.6rem 0.7rem; font-size: 0.7rem;
+  }
+  .txn-name { color: var(--text); font-weight: 500; }
+  .txn-amt { font-weight: 700; }
+  .txn-amt.in { color: #4CAF50; }
+  .txn-amt.out { color: var(--accent); }
+  .phone-glow {
+    position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 120px;
+    background: radial-gradient(var(--gold), transparent 70%);
+    opacity: 0.15; border-radius: 50%;
+  }
+
+  /* COUNTRIES */
+  .countries { text-align: center; }
+  .country-grid {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 1rem; margin-top: 3rem;
+  }
+  .country-pill {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(26,77,48,0.5);
+    border: 1px solid rgba(232,245,233,0.1);
+    border-radius: 50px; padding: 0.6rem 1.2rem;
+    font-size: 0.85rem; color: var(--cream);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .country-pill:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .country-flag { font-size: 1.2rem; }
+
+  /* TESTIMONIALS */
+  .testimonials { }
+  .testi-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+  }
+  .testi-card {
+    background: rgba(26,77,48,0.35);
+    border: 1px solid rgba(232,245,233,0.08);
+    border-radius: 20px; padding: 2rem;
+  }
+  .testi-stars { color: var(--gold); font-size: 0.85rem; margin-bottom: 1rem; }
+  .testi-text { font-size: 0.9rem; color: var(--muted); line-height: 1.7; font-style: italic; margin-bottom: 1.4rem; }
+  .testi-author { display: flex; align-items: center; gap: 0.8rem; }
+  .testi-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--mid-green), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; color: var(--deep-green);
+  }
+  .testi-name { font-size: 0.85rem; font-weight: 600; color: var(--cream); }
+  .testi-loc { font-size: 0.75rem; color: var(--muted); }
+
+  /* CTA */
+  .cta-section {
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(245,166,35,0.12) 0%, transparent 70%);
+  }
+  .cta-section .section-title { max-width: 100%; }
+  .cta-section p { color: var(--muted); font-size: 1rem; margin-top: 1rem; max-width: 480px; margin-inline: auto; }
+  .cta-actions { margin-top: 2.5rem; display: flex; justify-content: center; gap: 1rem; }
+
+  /* FOOTER */
+  footer {
+    position: relative; z-index: 10;
+    padding: 3rem 4rem;
+    border-top: 1px solid rgba(232,245,233,0.08);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--gold); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50% { opacity: 0.4; transform: scaleY(0.6); }
+  }
+  @keyframes floatCard {
+    0% { transform: translateY(100px) rotate(-3deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-120px) rotate(2deg); opacity: 0; }
+  }
+  @keyframes phoneTilt {
+    from { transform: rotateY(-18deg) rotateX(4deg); }
+    to { transform: rotateY(-8deg) rotateX(-2deg); }
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    nav ul { display: none; }
+    section { padding: 5rem 1.5rem; }
+    .features-grid { grid-template-columns: 1fr; }
+    .hiw { flex-direction: column; gap: 3rem; }
+    .testi-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+    .hero-stats { flex-wrap: wrap; justify-content: center; gap: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    AfricaPayConnect
+  </div>
+  <ul>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#countries">Coverage</a></li>
+    <li><a href="#cta" class="nav-cta">Get Started</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="float-cards">
+    <div class="fcard" style="left:8%;top:30%;animation-duration:14s;animation-delay:0s;">
+      <div class="fcard-inner"><span class="fcard-icon">💸</span><div><div class="fcard-label">Sent to Lagos</div><div class="fcard-val">+₦45,000</div></div></div>
+    </div>
+    <div class="fcard" style="right:9%;top:40%;animation-duration:16s;animation-delay:3s;">
+      <div class="fcard-inner"><span class="fcard-icon">🔒</span><div><div class="fcard-label">Secured Transfer</div><div class="fcard-val">✓ Instant</div></div></div>
+    </div>
+    <div class="fcard" style="left:12%;top:65%;animation-duration:18s;animation-delay:6s;">
+      <div class="fcard-inner"><span class="fcard-icon">📱</span><div><div class="fcard-label">Mobile Money</div><div class="fcard-val">KES 12,500</div></div></div>
+    </div>
+    <div class="fcard" style="right:7%;top:20%;animation-duration:12s;animation-delay:2s;">
+      <div class="fcard-inner"><span class="fcard-icon">⚡</span><div><div class="fcard-label">Processing</div><div class="fcard-val">0.8s avg</div></div></div>
+    </div>
+  </div>
+
+  <div class="hero-tag">Pan-African Payments Revolution</div>
+  <h1>Pay Across<br/><span>Africa</span><br/>Instantly</h1>
+  <p class="hero-sub">Send money, pay bills, and transfer funds across 54 African nations at lightning speed. Powered by cutting-edge infrastructure built for Africa's future.</p>
+  <div class="hero-actions">
+    <button class="btn-primary" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})">Start Sending →</button>
+    <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See How It Works</button>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">54<span>+</span></div><div class="stat-label">Countries</div></div>
+    <div class="stat"><div class="stat-num">2M<span>+</span></div><div class="stat-label">Users</div></div>
+    <div class="stat"><div class="stat-num">0.5<span>%</span></div><div class="stat-label">Transfer Fee</div></div>
+    <div class="stat"><div class="stat-num">99.9<span>%</span></div><div class="stat-label">Uptime</div></div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div style="max-width:1200px;margin:auto;">
+    <div class="reveal">
+      <div class="section-tag">Why AfricaPayConnect</div>
+      <div class="section-title">Built for Africa,<br/>Trusted Everywhere</div>
+    </div>
+    <div class="features-grid reveal">
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <h3>Instant Transfers</h3>
+        <p>Send money across borders in under 2 seconds. Our real-time rails connect every major African payment network seamlessly.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔐</div>
+        <h3>Bank-Grade Security</h3>
+        <p>256-bit encryption, biometric authentication, and AI-powered fraud detection protect every single transaction.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💰</div>
+        <h3>Low Fees</h3>
+        <p>Only 0.5% per transfer. No hidden charges, no FX markups. The fairest rates across the continent.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📱</div>
+        <h3>Mobile Money Ready</h3>
+        <p>Works with M-Pesa, MTN MoMo, Airtel Money, Orange Money, and 40+ other mobile wallets natively.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌍</div>
+        <h3>Multi-Currency</h3>
+        <p>Hold and exchange 30+ African currencies at real mid-market rates. NGN, KES, GHS, ZAR, EGP and more.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🤝</div>
+        <h3>Business API</h3>
+        <p>Powerful API for businesses to integrate pan-African payments in minutes. SDKs for every major platform.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="padding: 7rem 4rem;">
+  <div style="max-width:1200px;margin:auto;" class="hiw">
+    <div class="hiw-left reveal">
+      <div class="section-tag">Simple Process</div>
+      <div class="section-title">Transfer Money in 3 Easy Steps</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Create Your Account</h4>
+            <p>Sign up in 60 seconds with just your phone number. KYC verification is quick and fully digital.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>Add Funds</h4>
+            <p>Top up via bank transfer, card, or mobile money from any of our 200+ supported funding sources.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Send Instantly</h4>
+            <p>Enter the recipient's phone or account number, choose the amount, confirm, and done — funds arrive in seconds.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hiw-right reveal">
+      <div class="phone-container">
+        <div class="phone-3d">
+          <div class="phone-screen-top">
+            <div class="phone-bal-label">TOTAL BALANCE</div>
+            <div class="phone-bal">$2,840.50</div>
+          </div>
+          <div class="phone-txns">
+            <div class="txn">
+              <div class="txn-name">🇳🇬 Lagos Transfer</div>
+              <div class="txn-amt out">-$120.00</div>
+            </div>
+            <div class="txn">
+              <div class="txn-name">🇰🇪 M-Pesa In</div>
+              <div class="txn-amt in">+$340.00</div>
+            </div>
+            <div class="txn">
+              <div class="txn-name">🇬🇭 Accra Pay</div>
+              <div class="txn-amt out">-$85.00</div>
+            </div>
+            <div class="txn">
+              <div class="txn-name">🇿🇦 Salary</div>
+              <div class="txn-amt in">+$1,200.00</div>
+            </div>
+            <div class="txn">
+              <div class="txn-name">🇪🇬 Cairo Wire</div>
+              <div class="txn-amt out">-$200.00</div>
+            </div>
+          </div>
+          <div class="phone-glow"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COUNTRIES -->
+<section class="countries" id="countries" style="background:rgba(13,43,30,0.5);padding:6rem 4rem;">
+  <div style="max-width:1200px;margin:auto;" class="reveal">
+    <div class="section-tag">Coverage</div>
+    <div class="section-title" style="max-width:100%;">Operating Across the Continent</div>
+    <div class="country-grid">
+      <div class="country-pill"><span class="country-flag">🇳🇬</span> Nigeria</div>
+      <div class="country-pill"><span class="country-flag">🇰🇪</span> Kenya</div>
+      <div class="country-pill"><span class="country-flag">🇬🇭</span> Ghana</div>
+      <div class="country-pill"><span class="country-flag">🇿🇦</span> South Africa</div>
+      <div class="country-pill"><span class="country-flag">🇪🇬</span> Egypt</div>
+      <div class="country-pill"><span class="country-flag">🇪🇹</span> Ethiopia</div>
+      <div class="country-pill"><span class="country-flag">🇹🇿</span> Tanzania</div>
+      <div class="country-pill"><span class="country-flag">🇺🇬</span> Uganda</div>
+      <div class="country-pill"><span class="country-flag">🇸🇳</span> Senegal</div>
+      <div class="country-pill"><span class="country-flag">🇨🇮</span> Côte d'Ivoire</div>
+      <div class="country-pill"><span class="country-flag">🇿🇲</span> Zambia</div>
+      <div class="country-pill"><span class="country-flag">🇲🇦</span> Morocco</div>
+      <div class="country-pill"><span class="country-flag">🇷🇼</span> Rwanda</div>
+      <div class="country-pill"><span class="country-flag">🇦🇴</span> Angola</div>
+      <div class="country-pill"><span class="country-flag">🇲🇿</span> Mozambique</div>
+      <div class="country-pill" style="color:var(--gold);border-color:rgba(245,166,35,0.3);">+ 39 more</div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials" style="padding:7rem 4rem;">
+  <div style="max-width:1200px;margin:auto;">
+    <div class="reveal">
+      <div class="section-tag">Testimonials</div>
+      <div class="section-title">Trusted by Millions</div>
+    </div>
+    <div class="testi-grid reveal">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"I send money to my family in Lagos every week. AfricaPayConnect is the fastest and cheapest way I've found. It's transformed how I support my family."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">AO</div>
+          <div><div class="testi-name">Amara Okafor</div><div class="testi-loc">Lagos, Nigeria</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"As a business owner, the API integration was seamless. We now process cross-border payments in 14 countries without any friction."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">KM</div>
+          <div><div class="testi-name">Kwame Mensah</div><div class="testi-loc">Accra, Ghana</div></div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"The M-Pesa integration is flawless. I receive payments from clients across Africa directly to my mobile wallet. This is Africa's future."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">FW</div>
+          <div><div class="testi-name">Fatuma Wanjiru</div><div class="testi-loc">Nairobi, Kenya</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta" style="padding:8rem 4rem;">
+  <div style="max-width:800px;margin:auto;" class="reveal">
+    <div class="section-tag">Get Started Today</div>
+    <div class="section-title">Africa's Money,<br/>Moving Freely</div>
+    <p>Join 2 million+ users sending money smarter across Africa. Create your free account in 60 seconds.</p>
+    <div class="cta-actions">
+      <button class="btn-primary">Create Free Account →</button>
+      <button class="btn-ghost">Download the App</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo"><div class="logo-dot"></div> AfricaPayConnect</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">API Docs</a>
+    <a href="#">Support</a>
+    <a href="#">Blog</a>
+  </div>
+  <div>© 2026 AfricaPayConnect. All rights reserved.</div>
+</footer>
+
+<script>
+// ─── CUSTOM CURSOR ───────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+function animCursor() {
+  cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+  rx += (mx - rx) * 0.15; ry += (my - ry) * 0.15;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+document.querySelectorAll('button, a, .feat-card, .country-pill').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '20px'; cursor.style.height = '20px';
+    ring.style.width = '56px'; ring.style.height = '56px'; ring.style.opacity = '0.8';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px'; cursor.style.height = '12px';
+    ring.style.width = '36px'; ring.style.height = '36px'; ring.style.opacity = '0.5';
+  });
+});
+
+// ─── THREE.JS BACKGROUND ─────────────────────────────────
+const canvas = document.getElementById('bg-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.z = 50;
+
+// Ambient
+scene.add(new THREE.AmbientLight(0x1a4d30, 0.6));
+const dirLight = new THREE.DirectionalLight(0xF5A623, 0.8);
+dirLight.position.set(20, 30, 20);
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0xFF6B35, 0.6, 80);
+pointLight.position.set(-20, -10, 20);
+scene.add(pointLight);
+
+// Particle field — African map dots feel
+const pGeo = new THREE.BufferGeometry();
+const pCount = 1800;
+const pPos = new Float32Array(pCount * 3);
+const pSizes = new Float32Array(pCount);
+for (let i = 0; i < pCount; i++) {
+  pPos[i*3]   = (Math.random() - 0.5) * 160;
+  pPos[i*3+1] = (Math.random() - 0.5) * 100;
+  pPos[i*3+2] = (Math.random() - 0.5) * 80;
+  pSizes[i] = Math.random() * 1.5 + 0.3;
+}
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('size', new THREE.BufferAttribute(pSizes, 1));
+const pMat = new THREE.PointsMaterial({ color: 0xF5A623, size: 0.4, transparent: true, opacity: 0.35, sizeAttenuation: true });
+scene.add(new THREE.Points(pGeo, pMat));
+
+// Floating geometric shapes
+const shapes = [];
+const geoms = [
+  new THREE.IcosahedronGeometry(2.5, 0),
+  new THREE.OctahedronGeometry(2, 0),
+  new THREE.TetrahedronGeometry(2.2, 0),
+  new THREE.IcosahedronGeometry(1.5, 0),
+  new THREE.OctahedronGeometry(1.2, 0),
+];
+const wireMat = new THREE.MeshBasicMaterial({ color: 0x2E8B57, wireframe: true, transparent: true, opacity: 0.25 });
+const solidMat = new THREE.MeshPhongMaterial({ color: 0x1A4D30, transparent: true, opacity: 0.15, shininess: 80 });
+
+for (let i = 0; i < 12; i++) {
+  const g = geoms[i % geoms.length];
+  const wireGroup = new THREE.Group();
+  wireGroup.add(new THREE.Mesh(g, wireMat));
+  wireGroup.add(new THREE.Mesh(g, solidMat));
+  wireGroup.position.set(
+    (Math.random() - 0.5) * 120,
+    (Math.random() - 0.5) * 70,
+    (Math.random() - 0.5) * 30
+  );
+  const s = Math.random() * 0.8 + 0.5;
+  wireGroup.scale.set(s, s, s);
+  wireGroup.userData = {
+    rx: (Math.random() - 0.5) * 0.008,
+    ry: (Math.random() - 0.5) * 0.01,
+    floatSpeed: Math.random() * 0.002 + 0.001,
+    floatAmp: Math.random() * 2 + 1,
+    floatOffset: Math.random() * Math.PI * 2,
+  };
+  scene.add(wireGroup);
+  shapes.push(wireGroup);
+}
+
+// Connection lines (like payment routes)
+const lineMat = new THREE.LineBasicMaterial({ color: 0xF5A623, transparent: true, opacity: 0.08 });
+for (let i = 0; i < 15; i++) {
+  const pts = [];
+  const start = new THREE.Vector3((Math.random()-0.5)*140, (Math.random()-0.5)*80, (Math.random()-0.5)*20);
+  const end = new THREE.Vector3((Math.random()-0.5)*140, (Math.random()-0.5)*80, (Math.random()-0.5)*20);
+  const mid = new THREE.Vector3().lerpVectors(start, end, 0.5).add(new THREE.Vector3(0, (Math.random()-0.5)*20, 0));
+  const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+  for (let j = 0; j <= 20; j++) pts.push(curve.getPoint(j / 20));
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  scene.add(new THREE.Line(geo, lineMat));
+}
+
+// Large torus ring
+const torusGeo = new THREE.TorusGeometry(22, 0.15, 8, 80);
+const torusMat = new THREE.MeshBasicMaterial({ color: 0xF5A623, transparent: true, opacity: 0.07 });
+const torus = new THREE.Mesh(torusGeo, torusMat);
+torus.rotation.x = Math.PI / 4;
+scene.add(torus);
+
+const torus2 = new THREE.Mesh(new THREE.TorusGeometry(35, 0.08, 8, 100), new THREE.MeshBasicMaterial({ color: 0x2E8B57, transparent: true, opacity: 0.05 }));
+torus2.rotation.x = Math.PI / 3; torus2.rotation.y = Math.PI / 6;
+scene.add(torus2);
+
+// Mouse parallax
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', e => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.01;
+  camera.position.x += (mouseX * 8 - camera.position.x) * 0.03;
+  camera.position.y += (-mouseY * 4 - camera.position.y) * 0.03;
+  camera.lookAt(scene.position);
+  torus.rotation.z += 0.0015;
+  torus2.rotation.z -= 0.001;
+  shapes.forEach(s => {
+    s.rotation.x += s.userData.rx;
+    s.rotation.y += s.userData.ry;
+    s.position.y += Math.sin(t * s.userData.floatSpeed * 100 + s.userData.floatOffset) * s.userData.floatAmp * 0.005;
+  });
+  renderer.render(scene, camera);
+}
+animate();
+
+// ─── SCROLL REVEAL ───────────────────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.12 });
+revealEls.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
